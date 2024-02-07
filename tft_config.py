@@ -4,20 +4,23 @@ from machine import Pin, SPI
 from time import sleep
 import st7789
 
-TFA = 40	# top free area when scrolling
-BFA = 40	# bottom free area when scrolling
+TFA = 40  # top free area when scrolling
+BFA = 40  # bottom free area when scrolling
+
 
 def config(rotation=0, buffer_size=0, options=0):
 
     Pin(22, Pin.OUT, value=1)
 
-    spi = SPI(0,
+    spi = SPI(
+        0,
         baudrate=62500000,
         polarity=1,
         phase=0,
         sck=Pin(2, Pin.OUT),
         mosi=Pin(3, Pin.OUT),
-        miso=None)
+        miso=None,
+    )
 
     return st7789.ST7789(
         spi,
@@ -26,7 +29,8 @@ def config(rotation=0, buffer_size=0, options=0):
         cs=Pin(5, Pin.OUT),
         dc=Pin(1, Pin.OUT),
         backlight=Pin(4, Pin.OUT),
-        color_order=st7789.BGR,
+        color_order=st7789.RGB,
         rotation=rotation,
         options=options,
-        buffer_size=buffer_size)
+        buffer_size=buffer_size,
+    )

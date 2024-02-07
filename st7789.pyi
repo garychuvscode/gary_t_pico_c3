@@ -31,9 +31,9 @@ This driver adds support for:
 - Drawing text using converted TrueType fonts.
 - Drawing converted bitmaps
 """
+
 import ustruct as struct
 from typing import Final
-
 
 # commands
 ST7789_NOP: Final[int] = ...
@@ -126,28 +126,38 @@ ROTATIONS: list[int]
 MADCTL ROTATIONS[rotation % 4]
 """
 
-
 def color565(red: int, green: int = 0, blue: int = 0) -> int:
     """
     Convert red, green and blue values (0-255) into a 16-bit 565 encoding.
     """
 
-
 def _encode_pos(x: int, y: int) -> bytes:
     """Encode a position into bytes."""
 
-
 def _encode_pixel(color: int):
     """Encode a pixel color into bytes."""
-
 
 class ST7789:
     """
     ST7789 driver class
     """
-    def __init__(self, spi, width, height, dc=None, reset=None,
-                 cs=None, backlight=None, rotations=None, rotation=0, color_order=None,
-                 inversion=None, options=None, buffer_size=None):
+
+    def __init__(
+        self,
+        spi,
+        width,
+        height,
+        dc=None,
+        reset=None,
+        cs=None,
+        backlight=None,
+        rotations=None,
+        rotation=0,
+        color_order=None,
+        inversion=None,
+        options=None,
+        buffer_size=None,
+    ):
         """
         Initialize display.
         Args:
@@ -182,7 +192,6 @@ class ST7789:
         """
         Hard reset display.
         """
-
 
     def soft_reset(self):
         """
@@ -322,7 +331,15 @@ class ST7789:
             vssa (int): Vertical Scrolling Start Address
         """
 
-    def text(self, font, text: str, x0: int, y0: int, color: int=WHITE, background: int=BLACK):
+    def text(
+        self,
+        font,
+        text: str,
+        x0: int,
+        y0: int,
+        color: int = WHITE,
+        background: int = BLACK,
+    ):
         """
         Draw text on display in specified font and colors. 8 and 16 bit wide
         fonts are supported.
@@ -335,7 +352,7 @@ class ST7789:
             background (int): 565 encoded color to use for background
         """
 
-    def bitmap(self, bitmap, x: int, y: int, index: int=0):
+    def bitmap(self, bitmap, x: int, y: int, index: int = 0):
         """
         Draw a bitmap on display at the specified column and row
         Args:
@@ -345,10 +362,18 @@ class ST7789:
             index (int): Optional index of bitmap to draw from multiple bitmap
                 module
         """
-
     # @micropython.native
-    def write(self, font, string: str, x: int, y: int, fg: int=WHITE, bg: int=BLACK,
-              background_tuple=None, fill_flag=None):
+    def write(
+        self,
+        font,
+        string: str,
+        x: int,
+        y: int,
+        fg: int = WHITE,
+        bg: int = BLACK,
+        background_tuple=None,
+        fill_flag=None,
+    ):
         """
         Write a string using a converted true-type font on the display starting
         at the specified column and row
@@ -406,7 +431,9 @@ class ST7789:
         Draws a filled circle with radius r centered at the (x, y) coordinates in the given color.
         """
 
-    def draw(self, vector_font, s: str, x: int, y: int, fg: int=WHITE, scale: int=1.0):
+    def draw(
+        self, vector_font, s: str, x: int, y: int, fg: int = WHITE, scale: int = 1.0
+    ):
         """
         Draw text to the display using the specified hershey vector font with
         the coordinates as the lower-left corner of the text. The foreground
@@ -418,7 +445,7 @@ class ST7789:
         for example fonts and the utils directory for a font conversion program.
         """
 
-    def draw_len(self, vector_font, s: str, scale: int=1.0):
+    def draw_len(self, vector_font, s: str, scale: int = 1.0):
         """
         Returns the width of the string in pixels if drawn with the specified font.
         """
@@ -453,16 +480,32 @@ class ST7789:
         The polygon should consist of a list of (x, y) tuples forming a closed convex polygon.
         """
 
-    def fill_polygon(self, polygon: list[tuple[int, int]], x: int, y: int, color: int,
-                     angle: int=0, center_x: int=0, center_y: int=0):
+    def fill_polygon(
+        self,
+        polygon: list[tuple[int, int]],
+        x: int,
+        y: int,
+        color: int,
+        angle: int = 0,
+        center_x: int = 0,
+        center_y: int = 0,
+    ):
         """
         Draw a filled polygon at the x, y coordinates in the color given.
         The polygon may be rotated angle radians about the center_x and center_y point.
         The polygon should consist of a list of (x, y) tuples forming a closed convex polygon.
         """
 
-    def polygon(self, polygon: list[tuple[int, int]], x: int, y: int, color: int,
-                angle: int, center_x: int, center_y: int):
+    def polygon(
+        self,
+        polygon: list[tuple[int, int]],
+        x: int,
+        y: int,
+        color: int,
+        angle: int,
+        center_x: int,
+        center_y: int,
+    ):
         """
         Draw a polygon at the x, y coordinates in the color given.
         The polygon may be rotated angle radians a bout the center_x and center_y point.
