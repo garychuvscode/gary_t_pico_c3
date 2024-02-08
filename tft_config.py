@@ -21,7 +21,7 @@ def config(rotation=0, buffer_size=0, options=0):
         mosi=Pin(3, Pin.OUT),
         miso=None,
     )
-
+    # if there are color error, change the setting of RGB to BGR or toggle
     return st7789.ST7789(
         spi,
         135,

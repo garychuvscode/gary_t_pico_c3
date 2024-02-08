@@ -40,6 +40,8 @@ def main():
 
     height = tft.height()       # height of display in pixels
     width = tft.width()         # width if display in pixels
+    print(f'height: {height}')
+    print(f'height: {width}')
 
     tfa = tft_config.TFA	    # top free area when scrolling
     bfa = tft_config.BFA	    # bottom free area when scrolling
