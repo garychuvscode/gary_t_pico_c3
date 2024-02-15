@@ -27,7 +27,7 @@ def center(text):
 
 def main():
     tft.init()
-    tft.fill(st7789.color565(128,0,255))
+    tft.fill(st7789.color565(0,27,0))
     # center(b"\xAEHello\xAF")
     center(f"Cute Avon!")
     utime.sleep(2)
