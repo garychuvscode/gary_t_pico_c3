@@ -95,22 +95,22 @@ class st7789_tft:
             color (int): 565 encoded color to use for characters.
             background (int): 565 encoded color to use for background.
         """
-        signature_width = len(signature) * font.WIDTH
+        max_width = self.tft.width() // 2  # Limit signature to half of the screen width
+        signature_width = min(len(signature) * font.WIDTH, max_width)
         signature_x = self.tft.width() - signature_width
         signature_y = self.tft.height() - self.font.HEIGHT * 2  # Adjusted for two lines
-        # Only clear the area occupied by the signature text
         self.tft.fill_rect(
-            signature_x,
+            self.tft.width() // 2,
             signature_y,
-            signature_width,
+            self.tft.width() // 2,
             self.font.HEIGHT * 2,
             background
-        )
+        )  # Clear only the signature area
         self.tft.text(font, signature, signature_x, signature_y, color, background)
 
     def tft_status(
-    self, font=font, status0="loading", color=st7789.GREEN, background=st7789.BLACK
-):
+        self, font=font, status0="loading", color=st7789.GREEN, background=st7789.BLACK
+    ):
         """
         Display status text in the bottom left corner of the screen.
         Args:
@@ -120,11 +120,13 @@ class st7789_tft:
             background (int): 565 encoded color to use for background.
         """
         # update last status
-        if status0 != 'loading': 
+        if status0 != 'loading':
             self.last_status = status0
 
         # Calculate position for status text
         status_width = len(status0) * font.WIDTH
+        max_width = self.tft.width() // 2  # Limit status text to half of the screen width
+        status_width = min(status_width, max_width)
         max_height = (
             self.tft.height() - self.font.HEIGHT
         )  # Maximum height of text within display
@@ -139,12 +141,15 @@ class st7789_tft:
         # Display status text
         # Append additional dots based on status count
         dots = "." * (self.status_count % 3 + 1)
-        if self.last_status != '': 
+        if self.last_status != '':
             status_text = f"{self.last_status}{dots}"
+            status_text = status_text[:min(len(status_text), max_width // font.WIDTH)]
             self.tft.text(font, status_text, status_x, status_y, color, background)
-        else: 
+        else:
             status_text = f"{status0}{dots}"
+            status_text = status_text[:min(len(status_text), max_width // font.WIDTH)]
             self.tft.text(font, status_text, status_x, status_y, color, background)
+
         # Increment status count if status text has changed
         if status0 != self.last_status and status0 != 'loading':
             self.status_count = 0
@@ -155,6 +160,7 @@ class st7789_tft:
         # Reset status count when it reaches the threshold
         if self.status_count > 3:
             self.status_count = 0
+
 
 
 
@@ -198,7 +204,7 @@ if __name__ == "__main__":
     tft_test.tft_terminal_in(text="Grace")
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Frank")
-    tft_test.tft_signature()
+    tft_test.tft_signature(signature='FrankFrankFrankFrankFrankFrankFrank')
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Roy")
     utime.sleep(0.5)
@@ -211,7 +217,7 @@ if __name__ == "__main__":
     utime.sleep(0.5)
     tft_test.tft_status()
     utime.sleep(0.5)
-    tft_test.tft_status(status0='hi grace')
+    tft_test.tft_status(status0='hi gracehi gracehi gracehi gracehi gracehi grace')
     utime.sleep(0.5)
     tft_test.tft_status()
     utime.sleep(0.5)
