@@ -101,8 +101,32 @@ class st7789_tft:
         )  # Clear only the signature area
         self.tft.text(font, signature, signature_x, signature_y, color, background)
 
-    
+    def tft_status(
+    self, font=font, status0="loading", color=st7789.GREEN, background=st7789.BLACK
+):
+        """
+        Display status text in the bottom left corner of the screen.
+        Args:
+            font (module): font module to use.
+            status0 (str): status text to write.
+            color (int): 565 encoded color to use for characters.
+            background (int): 565 encoded color to use for background.
+        """
+        # Calculate position for status text
+        status_width = len(status0) * font.WIDTH
+        max_height = (
+            self.tft.height() - self.font.HEIGHT
+        )  # Maximum height of text within display
+        status_x = 0  # Adjusted to the left edge of the screen
+        status_y = max_height - self.font.HEIGHT  # Adjusted for one line from the bottom
 
+        # Clear the status area
+        self.tft.fill_rect(
+            0, status_y, self.tft.width() // 2, self.font.HEIGHT, background
+        )
+
+        # Display status text
+        self.tft.text(font, status0, status_x, status_y, color, background)
 
 
 if __name__ == "__main__":
@@ -133,11 +157,11 @@ if __name__ == "__main__":
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Cute Cute Avon")
     utime.sleep(0.5)
-    # tft_test.tft_status()
+    tft_test.tft_status()
     tft_test.tft_terminal_in(
         text="See you tomorrow, this is the long testing string for auto change to next line"
     )
-    utime.sleep(0.5)
+    utime.sleep(2)
     tft_test.tft_terminal_in(
         text="grace like to gi sai mean but just forgive that, she is always like this ")
     utime.sleep(0.5)
