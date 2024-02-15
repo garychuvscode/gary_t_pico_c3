@@ -18,6 +18,8 @@ class st7789_tft:
         self.x0 = 0
         self.y0 = 0
         self.terminal_count = 0
+        self.status_count = 0
+        self.last_status = ""
 
     def tft_terminal_in(
     self, font=font, text="", color=st7789.WHITE, background=st7789.BLACK
@@ -83,8 +85,8 @@ class st7789_tft:
 
 
     def tft_signature(
-        self, font=font, signature="gary", color=st7789.GREEN, background=st7789.BLACK
-    ):
+    self, font=font, signature="gary", color=st7789.GREEN, background=st7789.BLACK
+):
         """
         Display signature text aligned to the right.
         Args:
@@ -95,10 +97,15 @@ class st7789_tft:
         """
         signature_width = len(signature) * font.WIDTH
         signature_x = self.tft.width() - signature_width
-        signature_y = self.tft.height() - font.HEIGHT * 2  # Adjusted for two lines
+        signature_y = self.tft.height() - self.font.HEIGHT * 2  # Adjusted for two lines
+        # Only clear the area occupied by the signature text
         self.tft.fill_rect(
-            0, signature_y, self.tft.width(), font.HEIGHT * 2, background
-        )  # Clear only the signature area
+            signature_x,
+            signature_y,
+            signature_width,
+            self.font.HEIGHT * 2,
+            background
+        )
         self.tft.text(font, signature, signature_x, signature_y, color, background)
 
     def tft_status(
@@ -112,6 +119,10 @@ class st7789_tft:
             color (int): 565 encoded color to use for characters.
             background (int): 565 encoded color to use for background.
         """
+        # update last status
+        if status0 != 'loading': 
+            self.last_status = status0
+
         # Calculate position for status text
         status_width = len(status0) * font.WIDTH
         max_height = (
@@ -126,7 +137,26 @@ class st7789_tft:
         )
 
         # Display status text
-        self.tft.text(font, status0, status_x, status_y, color, background)
+        # Append additional dots based on status count
+        dots = "." * (self.status_count % 3 + 1)
+        if self.last_status != '': 
+            status_text = f"{self.last_status}{dots}"
+            self.tft.text(font, status_text, status_x, status_y, color, background)
+        else: 
+            status_text = f"{status0}{dots}"
+            self.tft.text(font, status_text, status_x, status_y, color, background)
+        # Increment status count if status text has changed
+        if status0 != self.last_status and status0 != 'loading':
+            self.status_count = 0
+            self.last_status = status0
+        else:
+            self.status_count += 1
+
+        # Reset status count when it reaches the threshold
+        if self.status_count > 3:
+            self.status_count = 0
+
+
 
 
 if __name__ == "__main__":
@@ -168,9 +198,32 @@ if __name__ == "__main__":
     tft_test.tft_terminal_in(text="Grace")
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Frank")
+    tft_test.tft_signature()
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Roy")
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Hihi Avon")
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Cute Cute Avon")
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status(status0='hi grace')
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+
+
