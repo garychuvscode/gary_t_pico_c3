@@ -1,20 +1,51 @@
-import random
 import utime
 import st7789
 import tft_config
 
-# import vga2_bold_16x32 as font
-import vga2_8x8 as font
+# import all the different font for selection
+"""
+vga1 have less element, vga2 have more element
+bold is more thick than original
+"""
+import vga1_8x8 as font1
+import vga1_8x16 as font2
+import vga1_16x16 as font3
+import vga1_16x32 as font4
+import vga1_bold_16x16 as font5
 
-tft = tft_config.config(1)
+# import vga2_8x8 as font6
+# import vga2_8x16 as font7
+# import vga2_16x16 as font8
+# import vga2_16x32 as font9
+# import vga2_bold_16x16 as font10
+# import vga2_bold_16x32 as font11
 
+# fmt: off
 
 class st7789_tft:
-    def __init__(self, font0=font):
+    def __init__(self, font0=0, rotation0=1):
+        '''
+        define a new TFT control object, choose the font and direction settings
+        font0: 0-3 -> small to big, 4 -> thick and big
+        '''
+        self.font_lib = [font1, font2, font3, font4, font5]
         self.str_history = []
-        self.tft = tft_config.config(1)
+        # tft config will create the and ST7789 object for
+        # other control, use selftft."function name"
+        # function refer to ST7789.pyi
+        self.tft = tft_config.config(rotation=rotation0)
+        '''
+        direction of display can be select from rotation
+        rotation (int): display rotation
+                    - 0-Portrait
+                    - 1-Landscape
+                    - 2-Inverted Portrait
+                    - 3-Inverted Landscape
+        '''
+        # default turn the back light on, use tft.off() to turn off
+        # and become all black
         self.tft.init()
-        self.font = font0
+        self.font = self.font_lib[font0]
         self.x0 = 0
         self.y0 = 0
         self.terminal_count = 0
@@ -22,8 +53,8 @@ class st7789_tft:
         self.last_status = ""
 
     def tft_terminal_in(
-    self, font=font, text="", color=st7789.WHITE, background=st7789.BLACK
-):
+        self, text="", color=st7789.WHITE, background=st7789.BLACK
+    ):
         """
         Display input text with automatic line wrapping like terminal.
         Args:
@@ -32,6 +63,7 @@ class st7789_tft:
             color (int): 565 encoded color to use for characters.
             background (int): 565 encoded color to use for background.
         """
+
         max_width = self.tft.width()  # Maximum width of text within display
         max_height = self.tft.height() - self.font.HEIGHT  # Maximum height for text
 
@@ -55,14 +87,18 @@ class st7789_tft:
         # Remove excessive history if needed
         while self.terminal_count * self.font.HEIGHT > max_height:
             # Calculate the number of lines to remove
-            lines_to_remove = (self.terminal_count * self.font.HEIGHT - max_height) // self.font.HEIGHT + 1
+            lines_to_remove = (
+                self.terminal_count * self.font.HEIGHT - max_height
+            ) // self.font.HEIGHT + 1
             # Remove the lines and update the terminal count
             for _ in range(lines_to_remove):
                 removed_line_length = len(self.str_history.pop(0))
-                self.terminal_count -= (removed_line_length * self.font.WIDTH) // max_width + 1
+                self.terminal_count -= (
+                    removed_line_length * self.font.WIDTH
+                ) // max_width + 1
 
         # Clear the screen except for the signature area
-        signature_height = self.font.HEIGHT * 2  # Height of the signature area
+        signature_height = self.font.HEIGHT  # Height of the signature area
         self.tft.fill_rect(
             0, 0, self.tft.width(), self.tft.height() - signature_height, background
         )
@@ -78,15 +114,14 @@ class st7789_tft:
                     current_y += self.font.HEIGHT
                 if current_y + self.font.HEIGHT > max_height:  # If exceeds the height
                     break
-                self.tft.text(font, char, current_x, current_y, color, background)
+                self.tft.text(self.font, char, current_x, current_y, color, background)
                 current_x += char_width
             current_x = self.x0
             current_y += self.font.HEIGHT
 
-
     def tft_signature(
-    self, font=font, signature="gary", color=st7789.GREEN, background=st7789.BLACK
-):
+        self, signature="gary", color=st7789.GREEN, background=st7789.BLACK
+    ):
         """
         Display signature text aligned to the right.
         Args:
@@ -96,20 +131,20 @@ class st7789_tft:
             background (int): 565 encoded color to use for background.
         """
         max_width = self.tft.width() // 2  # Limit signature to half of the screen width
-        signature_width = min(len(signature) * font.WIDTH, max_width)
+        signature_width = min(len(signature) * self.font.WIDTH, max_width)
         signature_x = self.tft.width() - signature_width
-        signature_y = self.tft.height() - self.font.HEIGHT * 2  # Adjusted for two lines
+        signature_y = self.tft.height() - self.font.HEIGHT
         self.tft.fill_rect(
             self.tft.width() // 2,
             signature_y,
             self.tft.width() // 2,
             self.font.HEIGHT * 2,
-            background
+            background,
         )  # Clear only the signature area
-        self.tft.text(font, signature, signature_x, signature_y, color, background)
+        self.tft.text(self.font, signature, signature_x, signature_y, color, background)
 
     def tft_status(
-        self, font=font, status0="loading", color=st7789.GREEN, background=st7789.BLACK
+        self, status0="loading", color=st7789.GREEN, background=st7789.BLACK
     ):
         """
         Display status text in the bottom left corner of the screen.
@@ -120,18 +155,23 @@ class st7789_tft:
             background (int): 565 encoded color to use for background.
         """
         # update last status
-        if status0 != 'loading':
+        if status0 != "loading":
             self.last_status = status0
 
         # Calculate position for status text
-        status_width = len(status0) * font.WIDTH
-        max_width = self.tft.width() // 2  # Limit status text to half of the screen width
+        status_width = len(status0) * self.font.WIDTH
+        max_width = (
+            self.tft.width() // 2
+        )  # Limit status text to half of the screen width
         status_width = min(status_width, max_width)
-        max_height = (
-            self.tft.height() - self.font.HEIGHT
-        )  # Maximum height of text within display
+        # max_height = (
+        #     self.tft.height() - self.font.HEIGHT
+        # )  # Maximum height of text within display
         status_x = 0  # Adjusted to the left edge of the screen
-        status_y = max_height - self.font.HEIGHT  # Adjusted for one line from the bottom
+        # status_y = (
+        #     max_height - self.font.HEIGHT
+        # )  # Adjusted for one line from the bottom
+        status_y = (self.tft.height() - self.font.HEIGHT)
 
         # Clear the status area
         self.tft.fill_rect(
@@ -140,28 +180,87 @@ class st7789_tft:
 
         # Display status text
         # Append additional dots based on status count
-        dots = "." * (self.status_count % 3 + 1)
-        if self.last_status != '':
+        dots = "." * (self.status_count % 4)
+        if self.last_status != "":
             status_text = f"{self.last_status}{dots}"
-            status_text = status_text[:min(len(status_text), max_width // font.WIDTH)]
-            self.tft.text(font, status_text, status_x, status_y, color, background)
+            status_text = status_text[: min(len(status_text), max_width // self.font.WIDTH)]
+            self.tft.text(self.font, status_text, status_x, status_y, color, background)
         else:
             status_text = f"{status0}{dots}"
-            status_text = status_text[:min(len(status_text), max_width // font.WIDTH)]
-            self.tft.text(font, status_text, status_x, status_y, color, background)
+            status_text = status_text[: min(len(status_text), max_width // self.font.WIDTH)]
+            self.tft.text(self.font, status_text, status_x, status_y, color, background)
 
         # Increment status count if status text has changed
-        if status0 != self.last_status and status0 != 'loading':
+        if status0 != self.last_status and status0 != "loading":
             self.status_count = 0
             self.last_status = status0
         else:
             self.status_count += 1
 
         # Reset status count when it reaches the threshold
-        if self.status_count > 3:
+        if self.status_count >= 4:
             self.status_count = 0
+    def tft_off(self):
+        '''
+        turn off tft
+        '''
+        self.tft.off()
 
+    def tft_on(self):
+        '''
+        turn off tft
+        '''
+        self.tft.on()
 
+    def tft_universal(self):
+        '''
+        input the code for directly control object
+        '''
+        self.str_to_code(string0=input('input the command to TFT: '))
+
+    def dedent(self, code):
+        lines = code.split('\n')
+        # 计算最小缩进
+        min_indent = float('inf')
+        for line in lines:
+            stripped = line.lstrip()
+            if stripped:
+                indent = len(line) - len(stripped)
+                min_indent = min(min_indent, indent)
+
+        # 移除最小缩进
+        dedented_lines = [line[min_indent:] for line in lines]
+        dedented_code = '\n'.join(dedented_lines)
+        return dedented_code
+
+    def str_to_code(self, string0="", *args, **kwargs ):
+        '''
+        function run for string command, also include the adjustment of 'TAB'
+        to prevent error for the operation
+        need to reference the function in st7789,pyi
+        '''
+        # # 231114, this is just testing string for the debugging
+        # string0 = '''self.print_debug(content=f'Grace went back home now', always_print0=1)'''
+
+        # 231114: add the reference dictionary to the exec function
+        self.str_code_ref = {'self': self}
+        # merge the self object with kwargs for cute Grace
+        self.str_code_ref.update(kwargs)
+
+        try:
+            # string0 = str(string0)
+            # textwrap => can't be used, give up and just for record
+            # string0 = textwrap.dedent(string0)
+
+            # there seems to have error
+            string0 = self.dedent(string0)
+            # 240131 if need the return result of string, use "eval" to replace "exec"
+            exec(string0, globals(), self.str_code_ref)
+
+        except Exception as e:
+            # here use direct print since there may not be error during operation
+            print(f'there are error on the TFT_OBJ: {e}')
+        pass
 
 
 
@@ -197,14 +296,15 @@ if __name__ == "__main__":
     tft_test.tft_terminal_in(
         text="See you tomorrow, this is the long testing string for auto change to next line"
     )
-    utime.sleep(2)
+    utime.sleep(0.5)
     tft_test.tft_terminal_in(
-        text="grace like to gi sai mean but just forgive that, she is always like this ")
+        text="grace like to gi sai mean but just forgive that, she is always like this "
+    )
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Grace")
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Frank")
-    tft_test.tft_signature(signature='FrankFrankFrankFrankFrankFrankFrank')
+    tft_test.tft_signature(signature="FrankFrankFrankFrankFrankFrankFrank")
     utime.sleep(0.5)
     tft_test.tft_terminal_in(text="Roy")
     utime.sleep(0.5)
@@ -217,7 +317,7 @@ if __name__ == "__main__":
     utime.sleep(0.5)
     tft_test.tft_status()
     utime.sleep(0.5)
-    tft_test.tft_status(status0='hi gracehi gracehi gracehi gracehi gracehi grace')
+    tft_test.tft_status(status0="hi grace")
     utime.sleep(0.5)
     tft_test.tft_status()
     utime.sleep(0.5)
@@ -228,8 +328,14 @@ if __name__ == "__main__":
     tft_test.tft_status()
     utime.sleep(0.5)
     tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status()
+    utime.sleep(0.5)
+    tft_test.tft_status(status0="hi gracehi gracehi gracehi gracehi gracehi grace")
     utime.sleep(0.5)
     tft_test.tft_status()
     utime.sleep(0.5)
 
-
+    tft_test.tft_universal()
