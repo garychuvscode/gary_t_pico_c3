@@ -52,9 +52,11 @@ class esp_uart:
             time.sleep_ms(50)  # 防止数据丢失
             self.response_b = self.uart.read()  # 原始响应
             self.response = self.response_b.decode("utf-8")  # 转换为字符串
+            print("send finished")
+            print(self.response)
             return self.response
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error send AT: {e}")
 
     def list_wifi(self, justify0="center_justify"):
         """
@@ -66,7 +68,7 @@ class esp_uart:
             self.print_wifi(justify=justify0)  # 打印 Wi-Fi 网络列表
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error list_wifi: {e}")
 
     def left_justify(self, s="", width=0):
         """返回左对齐的字符串，如果需要，在右侧填充空格至指定宽度。"""
@@ -77,7 +79,7 @@ class esp_uart:
         padding = (width - len(s)) // 2
         return " " * padding + s + " " * (width - len(s) - padding)
 
-    def print_wifi(self, justify="center_justify", print0=0):
+    def print_wifi(self, justify="center_justify", print0=1):
         """
         格式化打印 Wi-Fi 网络列表。
         列出所有找到的 Wi-Fi 以供选择。
@@ -143,7 +145,7 @@ class esp_uart:
                 pass
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error list wifi: {e}")
             pass
         pass
 
@@ -162,7 +164,7 @@ class esp_uart:
 
         if self.sim_mode == 0:
             ssid = "PY Chu"
-            password = "029447599"
+            password = "0294475990"
 
         else:
 
@@ -185,6 +187,7 @@ class esp_uart:
 
         # 尝试连接
         self.sendAT(f'CWJAP="{ssid}","{password}"')
+        print(f"to: {ssid}, {password}")
 
         # 循環直到獲得IP地址或超時
         timeout = 30  # 超時時間（秒）
@@ -208,10 +211,35 @@ class esp_uart:
 
         pass
 
+    def terminal(self):
+        """Simulate a terminal to interact with ESP32."""
+        print("Enter commands to send AT commands directly to ESP32.")
+        print("Enter 'exit' to exit the terminal.")
+
+        while True:
+            user_input = input(">> ").strip()
+
+            if user_input.lower() == "exit":
+                print("Exiting terminal.")
+                break
+            elif user_input.startswith("fun;"):
+                # If the input starts with "fun;", treat it as a class method
+                method_name = user_input[len("fun;") :]
+                try:
+                    getattr(self, method_name)()
+                except AttributeError:
+                    print("Invalid command. Method not found.")
+            else:
+                # Otherwise, treat it as an AT command
+                response = self.sendAT(user_input)
+                print("Response:", response)
+
 
 # 测试代码
 if __name__ == "__main__":
     esp = esp_uart(1)  # 初始化 esp_uart 对象用于 UART 总线 1
     esp.list_wifi()  # 调用, default center_justify
-    # esp.list_wifi(justify0="left_justify")
-    esp.connect_to()
+    # esp.list_wifi(justify0="left_justify")'
+    # esp.sendAT("RESTORE")
+    # esp.connect_to(ssid_ind0="PY Chu", password0="0294475990")
+    esp.terminal()
