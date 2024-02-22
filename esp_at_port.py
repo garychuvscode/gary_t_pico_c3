@@ -1,6 +1,7 @@
 from machine import UART, Pin
 import time
 
+# fmt: off
 
 class esp_uart:
     """
@@ -163,6 +164,7 @@ class esp_uart:
                     pass
                 print(f"the SSID we found is (index start from 1):\n {self.SSID_list}")
                 self.index_SSID_list()
+                print(f"the MAC we found is (index start from 1):\n {self.MAC_list}")
                 pass
             else:
                 # only print the SSID we have
@@ -174,6 +176,35 @@ class esp_uart:
             pass
         pass
 
+    def table_gen(self, title_2=["Index", "SSID", "MAC Address"], SSID_list=None, MAC_list=None, justify="center"):
+        if SSID_list is None:
+            SSID_list = self.SSID_list
+        if MAC_list is None:
+            MAC_list = self.MAC_list
+
+        # 定义对齐方式
+        if justify == "left":
+            justify_func = self.left_justify
+        else:
+            justify_func = self.center_justify
+
+        # 计算每列的最大宽度，包括标题
+        max_widths = [max(len(title), max([len(str(item)) for item in column], default=0)) for title, column in zip(title_2, [SSID_list, MAC_list])]
+
+        # 打印标题行
+        header = "|".join(justify_func(title, width) for title, width in zip(title_2, max_widths))
+        print(header)
+
+        # 打印分隔线
+        divider = "+".join("-" * width for width in max_widths)
+        print(divider)
+
+        # # 打印每一行的数据
+        # for idx, (ssid, mac) in enumerate(zip(SSID_list, MAC_list), start=1):
+        #     row = "|".join([justify_func(str(idx), max_widths[0]), justify_func(ssid, max_widths[1]), justify_func(mac, max_widths[2])])
+        #     print(row)
+
+
     def index_SSID_list(self):
         """
         to print the SSID with index
@@ -184,6 +215,50 @@ class esp_uart:
             print(f"{i+1}: {self.SSID_list[i]}")
 
         pass
+
+    def table_g(self, title_list=["Index", "SSID", "MAC Address"], justify="center"):
+        """
+        Print the SSID with index along with their corresponding MAC addresses, aligning each column according to the specified justification,
+        and include a title row at the top of the table with the same width as the maximum width of the corresponding data columns.
+        - title_list: A list containing the titles for each column.
+        - justify: The alignment mode, either "left" for left justification or "center" for center justification.
+        """
+        print("The SSID and MAC addresses we found are (index starts from 1):")
+
+        # Calculate the maximum width for each column considering both title width and data width
+        max_widths = [len(title) for title in title_list]  # Initialize with title widths
+
+        for ssid, mac in zip(self.SSID_list, self.MAC_list):
+            max_widths[1] = max(max_widths[1], len(ssid))  # Compare and update with SSID widths
+            max_widths[2] = max(max_widths[2], len(mac))  # Compare and update with MAC widths
+            # 240222 for the future reserve
+            # max_widths[3] = max(max_widths[3], len(ip))    # Compare and update with IP widths
+        max_widths[0] = max(max_widths[0], len(str(len(self.SSID_list))))  # Compare and update with the length of the index
+
+        # Define the justify function based on the specified mode
+        if justify == "left":
+            justify_func = self.left_justify
+        elif justify == "center":
+            justify_func = self.center_justify
+        else:
+            raise ValueError("Invalid justification mode. Please use 'left' or 'center'.")
+
+        # Print the title row with the calculated maximum width for each column
+        title_row = "|".join(justify_func(title, width + 2) for title, width in zip(title_list, max_widths))  # Add 2 for padding
+        print(title_row)
+        print("-" * len(title_row))  # Print divider
+
+        # Print each SSID and its corresponding MAC address with their index, aligning each column
+        for i, (ssid, mac) in enumerate(zip(self.SSID_list, self.MAC_list), start=1):
+            row = "|".join([
+                justify_func(str(i), max_widths[0] + 2),  # Index column
+                justify_func(ssid, max_widths[1] + 2),  # SSID column
+                justify_func(mac, max_widths[2] + 2)  # MAC column
+                # 240222 for the future reserve
+                # justify_func(ip, max_widths[3] + 2)     # IP column
+            ])
+            print(row)
+
 
     def connect_to(self, ssid_ind0=None, password0="0"):
 
@@ -261,11 +336,12 @@ class esp_uart:
                 # print("Response:", response)
 
 
-# 测试代码
+# 测试代码fun
 if __name__ == "__main__":
     esp = esp_uart(1)  # 初始化 esp_uart 对象用于 UART 总线 1
-    # esp.list_wifi()  # 调用, default center_justify
+    esp.list_wifi()  # 调用, default center_justify
+    esp.table_g()
     # esp.list_wifi(justify0="left_justify")'
     # esp.sendAT("RESTORE")
     # esp.connect_to(ssid_ind0="PY Chu", password0="0294475990")
-    esp.terminal()
+    # esp.terminal()

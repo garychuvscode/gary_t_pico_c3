@@ -1,6 +1,7 @@
 import machine
 import utime
 
+# fmt: off
 
 class TemperatureSensor:
     def __init__(self, adc_pin=4, conversion_factor=3.3 / 65535, LPF_en=0):
