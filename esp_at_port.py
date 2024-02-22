@@ -17,9 +17,10 @@ class esp_uart:
             rx=Pin(9),
             cts=Pin(10),
             rts=Pin(11),
-            txbuf=1024,
-            rxbuf=1024,
+            txbuf=4096,
+            rxbuf=4906,
         )
+        self.sendAT("RST")  # reset
         self.sendAT("ATE0")  # 关闭回声
         self.SSID_list = []  # 存储SSID列表
         self.MAC_list = []  # 存储MAC地址列表
@@ -30,15 +31,30 @@ class esp_uart:
             "Index",
             "Type",
             "SSID",
-            "Signal Strength",
+            "Sig amp",
             "MAC Address",
-            "Signal",
-            "Min Speed",
-            "Max Speed",
-            "Pass Type",
-            "Wi-Fi Mode",
-            "SSID Visible",
+            "sig",
+            "Min S",
+            "Max S",
+            "P Type",
+            "Mode",
+            "ID Vis",
         ]
+
+        # # 格式化标题和分割线
+        # self.titles = [
+        #     "Index",
+        #     "Type",
+        #     "SSID",
+        #     "Signal amp",
+        #     "MAC Address",
+        #     "sig",
+        #     "Min Speed",
+        #     "Max Speed",
+        #     "Password Type",
+        #     "Wi-Fi Mode",
+        #     "SSID Visible",
+        # ]
 
     def sendAT(self, cmd):
         """
@@ -46,17 +62,20 @@ class esp_uart:
         - cmd: 要发送的 AT 命令（不带 'AT+' 前缀）
         """
         try:
+            # 240222 this command will cause error, don't use
+            # if self.uart.any() != 0:
+            #     print(f'clean buffer if not empty: "{self.uart.read()}"')
             self.uart.write(f"AT+{cmd}\r\n")
             while self.uart.any() == 0:
                 time.sleep_ms(1)
-            time.sleep_ms(50)  # 防止数据丢失
+            time.sleep_ms(200)  # 防止数据丢失
             self.response_b = self.uart.read()  # 原始响应
             self.response = self.response_b.decode("utf-8")  # 转换为字符串
             print("send finished")
-            print(self.response)
+            print(f'by "{cmd}" getting \n"{self.response}"\n')
             return self.response
         except Exception as e:
-            print(f"Error send AT: {e}")
+            print(f"Error send AT using {cmd}: {e}")
 
     def list_wifi(self, justify0="center_justify"):
         """
@@ -64,7 +83,12 @@ class esp_uart:
         """
         try:
             self.sendAT("CWMODE=1")  # 设置 Wi-Fi 模式为站点
+            # time.sleep(0.5)
             self.sendAT("CWLAP")  # 列出可用的 AP
+            # need some time for loading the internet
+            time.sleep(10)
+            self.sendAT("CWLAP")  # 列出可用的 AP
+            # self.sendAT("CWLAP")  # 列出可用的 AP
             self.print_wifi(justify=justify0)  # 打印 Wi-Fi 网络列表
 
         except Exception as e:
@@ -87,6 +111,7 @@ class esp_uart:
         """
         try:
             lines = self.response.split("\n")
+            # print(f'lines {lines}')
             self.SSID_list.clear()  # 重置SSID列表
             self.MAC_list.clear()  # 重置MAC地址列表
             widths = [0] * len(self.titles)  # 预设每列的最大宽度，包括索引列
@@ -94,7 +119,7 @@ class esp_uart:
             # 计算每列的最大宽度
             for line in lines[1:-1]:  # 排除起始和结束行
                 elements = line.split(",")
-                if len(elements) > 4:  # 确保有足够的元素
+                if len(elements) > 1:  # 确保有足够的元素
                     self.SSID_list.append(elements[1].strip('"'))  # 存储SSID
                     self.MAC_list.append(elements[3].strip('"'))  # 存储MAC地址
                 else:
@@ -180,30 +205,31 @@ class esp_uart:
                 password = password0
                 pass
 
-        # # 尝试连接
-        # self.sendAT(f'CWJAP="{ssid}","{password}"')
-        # ip_response = self.sendAT("CIFSR")  # 获取 IP 地址
-        # print("Connected, IP address:\n", ip_response)
-
         # 尝试连接
         self.sendAT(f'CWJAP="{ssid}","{password}"')
-        print(f"to: {ssid}, {password}")
+        ip_response = self.sendAT("CIFSR")  # 获取 IP 地址
+        print("Connected, IP address:\n", ip_response)
 
-        # 循環直到獲得IP地址或超時
-        timeout = 30  # 超時時間（秒）
-        start_time = time.time()
-        while True:
-            ip_response = self.sendAT("CIFSR")  # 获取 IP 地址
-            if ip_response != "busy p...":
-                break  # 如果IP地址不再是"busy p..."，則跳出迴圈
-            elif time.time() - start_time > timeout:
-                print("Timeout occurred while waiting for IP address.")
-                break  # 如果超時，則跳出迴圈
-            else:
-                print("Loading...")  # 顯示 loading
-                time.sleep(1)  # 添加一秒的等待時間
+        # # 尝试连接
+        # self.sendAT(f'CWJAP="{ssid}","{password}"')
+        # print(f"to: {ssid}, {password}")
+
+        # # 循環直到獲得IP地址或超時
+        # timeout = 30  # 超時時間（秒）
+        # start_time = time.time()
+        # while True:
+        #     ip_response = self.sendAT("CIFSR")  # 获取 IP 地址
+        #     if ip_response != "busy p...":
+        #         break  # 如果IP地址不再是"busy p..."，則跳出迴圈
+        #     elif time.time() - start_time > timeout:
+        #         print("Timeout occurred while waiting for IP address.")
+        #         break  # 如果超時，則跳出迴圈
+        #     else:
+        #         print("Loading...")  # 顯示 loading
+        #         time.sleep(1)  # 添加一秒的等待時間
 
         # 檢查是否成功連接並顯示 IP 地址
+        time.sleep(1)
         if ip_response != "busy p...":
             print("Connected, IP address:\n", ip_response)
         else:
@@ -232,13 +258,13 @@ class esp_uart:
             else:
                 # Otherwise, treat it as an AT command
                 response = self.sendAT(user_input)
-                print("Response:", response)
+                # print("Response:", response)
 
 
 # 测试代码
 if __name__ == "__main__":
     esp = esp_uart(1)  # 初始化 esp_uart 对象用于 UART 总线 1
-    esp.list_wifi()  # 调用, default center_justify
+    # esp.list_wifi()  # 调用, default center_justify
     # esp.list_wifi(justify0="left_justify")'
     # esp.sendAT("RESTORE")
     # esp.connect_to(ssid_ind0="PY Chu", password0="0294475990")
